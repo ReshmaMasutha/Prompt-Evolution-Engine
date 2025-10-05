@@ -10,12 +10,12 @@ from core_utils import generate_variations_with_meta, get_model_response, calcul
 DEFAULT_PROMPT = "Write a blog post about the importance of AI in education."
 if 'base_prompt_text' not in st.session_state:
     st.session_state['base_prompt_text'] = DEFAULT_PROMPT
-# Add session state for the view
+# Initialize session state for the view: 'Welcome' or 'Engine'
 if 'app_view' not in st.session_state:
     st.session_state['app_view'] = 'Welcome'
 
 
-# --- REPORT GENERATION FUNCTION (Moved from Engine.py) ---
+# --- REPORT GENERATION FUNCTION ---
 def generate_report_content(df, base_prompt):
     """Formats the DataFrame and results into a human-readable string for download."""
     report = f"--- Prompt Evolution Report ---\n"
@@ -39,12 +39,13 @@ def generate_report_content(df, base_prompt):
         
     return report
 
-# --- PAGE CONFIGURATION AND API CHECK (Must run before content) ---
+# --- PAGE CONFIGURATION AND API CHECK ---
 st.set_page_config(layout="wide", page_title="Prompt Evolution Engine")
 
-# Check API key *after* imports but *before* content display
+# Check API key (must run after imports, uses 'openai')
 openai.api_key = os.getenv("OPENAI_API_KEY") 
 if not os.getenv('OPENAI_API_KEY'):
+    # The check below should not be hit if the key is set in Streamlit Secrets
     st.error("🚨 OpenAI API Key not found! Please set it in Streamlit Secrets.")
     st.stop() 
 
@@ -66,21 +67,20 @@ if st.session_state['app_view'] == 'Welcome':
     # Button to switch to the main application
     if st.button("Start Prompt Evolution Engine 🚀", type="primary"):
         st.session_state['app_view'] = 'Engine'
-        st.experimental_rerun()
+        st.rerun() # <-- CORRECTED RERUN COMMAND
 
 elif st.session_state['app_view'] == 'Engine':
     
     # Button to go back to the Welcome page 
     if st.button("⬅️ Back to Welcome"):
         st.session_state['app_view'] = 'Welcome'
-        st.experimental_rerun()
+        st.rerun() # <-- CORRECTED RERUN COMMAND
         
     st.title("⚙️ Prompt Evolution Engine")
     st.markdown("Let AI evolve and test your prompt to find the optimal version.")
 
     # --- 1. Input Section ---
     st.header("📝 1. Enter Your Base Prompt")
-    # Use the session state value for the text area
     base_prompt = st.text_area(
         "Base Prompt:", 
         value=st.session_state['base_prompt_text'],
@@ -101,7 +101,6 @@ elif st.session_state['app_view'] == 'Engine':
 
         # Use Streamlit's spinner for a professional look during long tasks
         with st.spinner("Step 1/2: Generating and Mutating Prompts..."):
-            # Get the list of evolved prompts from the LLM
             variations = generate_variations_with_meta(
                 base_prompt=base_prompt, 
                 n=num_variations,
@@ -215,7 +214,7 @@ elif st.session_state['app_view'] == 'Engine':
         with button_col1:
             if st.button("🔁 Evolve Again (Use Winning Prompt as New Base)", type="secondary", use_container_width=True):
                 st.session_state['base_prompt_text'] = st.session_state['winning_prompt']
-                st.experimental_rerun()
+                st.rerun() # <-- CORRECTED RERUN COMMAND
 
         # Column 2: Download Report Button
         with button_col2:
