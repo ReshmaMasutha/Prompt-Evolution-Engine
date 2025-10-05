@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px # Import Plotly for the visualization
-
+import openai
 # Import all necessary components from your utility file
 from core_utils import generate_variations_with_meta, get_model_response, calculate_metrics 
 
